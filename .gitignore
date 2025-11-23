@@ -1,0 +1,31 @@
+# Virtual environments
+venv/
+env/
+trade_env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+*.env
+
+# OS Files
+.DS_Store
+
+# Logs
+*.log
+
+# Data files (if you want to ignore processed CSVs)
+data/raw/
+data/processed/
+
+# IDE folders
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
