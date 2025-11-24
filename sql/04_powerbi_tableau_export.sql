@@ -6,19 +6,24 @@
 -- ============================================================================
 -- 1. LINE CHART: Total Imports vs Duty Paid (2017-2025)
 -- ============================================================================
-CREATE OR REPLACE VIEW v_line_chart_imports_vs_duty AS
+DROP VIEW IF EXISTS v_line_chart_imports_vs_duty;
+
+CREATE VIEW v_line_chart_imports_vs_duty AS
 SELECT 
     year,
     month,
-    CONCAT(year, '-', LPAD(month, 2, '0')) AS year_month,
-    SUM(total_value_inr) / 10000000 AS total_imports_crores,
-    SUM(duty_paid_inr) / 10000000 AS duty_paid_crores,
-    SUM(grand_total_inr) / 10000000 AS grand_total_crores,
+    CONCAT(CAST(year AS CHAR), '-', 
+          CASE 
+              WHEN month < 10 THEN CONCAT('0', CAST(month AS CHAR))
+              ELSE CAST(month AS CHAR)
+          END) AS year_month,
+    (SUM(total_value_inr) / 10000000) AS total_imports_crores,
+    (SUM(duty_paid_inr) / 10000000) AS duty_paid_crores,
+    (SUM(grand_total_inr) / 10000000) AS grand_total_crores,
     COUNT(*) AS transaction_count
 FROM trade_data
 WHERE year IS NOT NULL AND month IS NOT NULL
-GROUP BY year, month
-ORDER BY year, month;
+GROUP BY year, month;
 
 -- Export Query for Line Chart
 SELECT 
@@ -34,7 +39,9 @@ FROM v_line_chart_imports_vs_duty;
 -- ============================================================================
 -- 2. YOY GROWTH HEATMAP
 -- ============================================================================
-CREATE OR REPLACE VIEW v_yoy_growth_heatmap AS
+DROP VIEW IF EXISTS v_yoy_growth_heatmap;
+
+CREATE VIEW v_yoy_growth_heatmap AS
 WITH monthly_data AS (
     SELECT 
         year,
@@ -92,8 +99,7 @@ SELECT
     ROUND(total_value_inr / 10000000, 2) AS total_value_inr_crores,
     ROUND(duty_paid_inr / 10000000, 2) AS duty_paid_inr_crores
 FROM yoy_monthly
-WHERE year >= 2018  -- Need previous year for YoY calculation
-ORDER BY year, month;
+WHERE year >= 2018;  -- Need previous year for YoY calculation
 
 -- Export Query for YoY Growth Heatmap
 SELECT 
@@ -109,7 +115,9 @@ FROM v_yoy_growth_heatmap;
 -- ============================================================================
 -- 3. SUNBURST/TREEMAP: Category → Sub-Category → Model
 -- ============================================================================
-CREATE OR REPLACE VIEW v_sunburst_category_hierarchy AS
+DROP VIEW IF EXISTS v_sunburst_category_hierarchy;
+
+CREATE VIEW v_sunburst_category_hierarchy AS
 SELECT 
     COALESCE(category, 'Uncategorized') AS category,
     COALESCE(sub_category, 'Uncategorized') AS sub_category,
@@ -124,8 +132,7 @@ FROM trade_data
 GROUP BY 
     COALESCE(category, 'Uncategorized'),
     COALESCE(sub_category, 'Uncategorized'),
-    COALESCE(model_name_final, model_name_parsed, 'Unknown Model')
-ORDER BY total_value_inr_crores DESC;
+    COALESCE(model_name_final, model_name_parsed, 'Unknown Model');
 
 -- Export Query for Sunburst/TreeMap
 SELECT 
@@ -146,7 +153,9 @@ FROM v_sunburst_category_hierarchy;
 -- ============================================================================
 
 -- 4a. Top Suppliers by Value (All Time)
-CREATE OR REPLACE VIEW v_top_suppliers_by_value AS
+DROP VIEW IF EXISTS v_top_suppliers_by_value;
+
+CREATE VIEW v_top_suppliers_by_value AS
 SELECT 
     supplier_code,
     lifetime_total_value_inr_crores,
@@ -158,7 +167,6 @@ SELECT
     first_transaction_date,
     last_transaction_date
 FROM v_supplier_lifetime_stats
-ORDER BY lifetime_total_value_inr_crores DESC
 LIMIT 50;
 
 -- Export Query for Top Suppliers by Value
@@ -173,7 +181,9 @@ SELECT
 FROM v_top_suppliers_by_value;
 
 -- 4b. Active vs Churned Suppliers
-CREATE OR REPLACE VIEW v_supplier_active_vs_churned AS
+DROP VIEW IF EXISTS v_supplier_active_vs_churned;
+
+CREATE VIEW v_supplier_active_vs_churned AS
 SELECT 
     supplier_segment,
     COUNT(*) AS supplier_count,
@@ -182,14 +192,7 @@ SELECT
     SUM(total_transactions) AS total_transactions,
     AVG(active_years) AS avg_active_years
 FROM v_supplier_lifetime_stats
-GROUP BY supplier_segment
-ORDER BY 
-    CASE supplier_segment
-        WHEN 'Retained' THEN 1
-        WHEN 'New' THEN 2
-        WHEN 'Churned (Recent)' THEN 3
-        WHEN 'Churned (Old)' THEN 4
-    END;
+GROUP BY supplier_segment;
 
 -- Export Query for Active vs Churned
 SELECT 
@@ -204,7 +207,9 @@ FROM v_supplier_active_vs_churned;
 -- ============================================================================
 -- 5. SCATTER PLOT: Capacity/Spec vs Per Unit Cost
 -- ============================================================================
-CREATE OR REPLACE VIEW v_scatter_capacity_vs_cost AS
+DROP VIEW IF EXISTS v_scatter_capacity_vs_cost;
+
+CREATE VIEW v_scatter_capacity_vs_cost AS
 SELECT 
     hs_code,
     category,
@@ -270,7 +275,9 @@ ORDER BY year DESC, total_value_inr DESC;
 -- ============================================================================
 -- COMPREHENSIVE DASHBOARD EXPORT (All metrics in one query)
 -- ============================================================================
-CREATE OR REPLACE VIEW v_dashboard_comprehensive AS
+DROP VIEW IF EXISTS v_dashboard_comprehensive;
+
+CREATE VIEW v_dashboard_comprehensive AS
 SELECT 
     -- Time dimensions
     year,
