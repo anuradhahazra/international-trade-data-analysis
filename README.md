@@ -2,6 +2,9 @@
 
 A complete data pipeline for processing international trade data (2017-2025).
 
+**Power BI Dashboard Views:**
+**https://drive.google.com/file/d/1bOSzJ7a54aCfHYOCnnAfNHhnC3L9aD29/view?usp=sharing**
+
 ## Project Structure
 
 ```
